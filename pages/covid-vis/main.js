@@ -1,0 +1,1 @@
+import CovidData from './asset/covid-data.json'
