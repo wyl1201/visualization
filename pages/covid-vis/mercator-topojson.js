@@ -1,3 +1,4 @@
+import * as topojson from 'topojson-client'
 import '~/style.css'
 import './main.css'
 
@@ -16,17 +17,20 @@ function projection([longitude, latitude]) {
 function drawPoints(ctx, points) {
   ctx.beginPath()
   ctx.moveTo(...points[0])
-  for (let i = 1; i < points.length; i += 1) {
+  for (let i = 1; i < points.length; i++) {
     ctx.lineTo(...points[i])
   }
   ctx.fill()
 }
 
 ;(async function () {
-  const worldData = await (await fetch('./asset/world-geojson.json')).json()
-  console.log('🚀 ~ file: main.js ~ line 14 ~ worldData', worldData)
-
-  const { features } = worldData
+  const worldData = await (await fetch('./asset/world-topojson.json')).json()
+  const countries = topojson.feature(worldData, 'countries')
+  console.log(
+    `🚀 ~ file: mercator-topojson.html ~ line 44 ~ countries`,
+    countries
+  )
+  const { features } = countries
   features.forEach(({ geometry }) => {
     if (geometry.type === 'MultiPolygon') {
       const { coordinates } = geometry
