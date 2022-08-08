@@ -1,0 +1,214 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <link rel="icon" type="image/svg+xml" href="/vite.svg" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>指令式图形系统-Canvas</title>
+    <style>
+      .map-legend {
+        position: absolute;
+        left: 50px;
+        bottom: 200px;
+        width: 16px;
+      }
+      .item {
+        height: 32px;
+        position: relative;
+      }
+
+      item:first-child {
+        border-radius: 1px 1px 0 0;
+      }
+      .item > p {
+        position: absolute;
+        line-height: 32px;
+        height: 32px;
+        white-space: nowrap;
+        font-size: 16px;
+        left: 20px;
+        top: 50%;
+        transform: translateY(-50%);
+        color: #737373;
+        font-weight: 400;
+      }
+    </style>
+  </head>
+  <body>
+    <div id="app">
+      <canvas width="800" height="800"></canvas>
+      <!-- Map Legend -->
+      <div class="map-legend">
+        <div class="item" style="background-color: rgb(255, 112, 79)">
+          <p>1000人以上</p>
+        </div>
+        <div class="item" style="background-color: rgb(255, 170, 128)">
+          <p>200-999人</p>
+        </div>
+        <div class="item" style="background-color: rgb(255, 208, 166)">
+          <p>50-199人</p>
+        </div>
+        <div class="item" style="background-color: rgb(255, 231, 184)">
+          <p>1-49人</p>
+        </div>
+        <div class="item" style="background-color: rgb(226, 235, 244)">
+          <p>0人</p>
+        </div>
+      </div>
+    </div>
+    <script type="module">
+      import '/style.css'
+      import './main.css'
+
+      // dpi
+      const devicePixelRatio = window.devicePixelRatio || 1
+
+      const canvas = document.querySelector('canvas')
+      const ctx = canvas.getContext('2d')
+
+      const { width, height } = canvas.getBoundingClientRect()
+      canvas.width = width * devicePixelRatio
+      canvas.height = height * devicePixelRatio
+      canvas.style.width = `${width}px`
+      canvas.style.height = `${height}px`
+
+      ctx.scale(devicePixelRatio, devicePixelRatio)
+      ctx.fillStyle = 'black'
+
+      // 中国经度范围：73°33′E至135°05′E；纬度范围：3°51′N至53°33′N。
+      // 当中的字母专E ， 表示东经；属字母N，表示北纬。东经正数，西经为负数；
+      // 北纬为正数，南纬为负数。
+      // [73.502355, 3.39716187, 135.09567, 53.563269]
+
+      function projection([longitude, latitude]) {
+        const x = (width * (longitude - 73.33)) / (135.09567 - 73.502355)
+        const y =
+          height * (1 - (latitude - 3.39716187) / (53.563269 - 3.39716187))
+        return [x, y]
+      }
+
+      // 整合地理数据和疫情数据
+      function mapDataToCountries(geoData, convidData) {
+        const convidDataMap = {}
+        const provinces = convidData.diseaseh5Shelf.areaTree[0].children
+        provinces.forEach((d) => {
+          const name = d.name
+          const adcode =
+            name === '香港'
+              ? 810000
+              : name === '澳门'
+              ? 820000
+              : name === '台湾'
+              ? 710000
+              : d.adcode
+          convidDataMap[adcode] = d
+        })
+
+        geoData.features.forEach((d) => {
+          const adcode = d.properties.adcode
+          d.properties.convid = convidDataMap[adcode] || {}
+        })
+      }
+
+      // 我把无人感染到感染人数超过 1000 人划分了 5 个等级，
+      // 每个等级用不同的颜色表示：
+      // 若该地区无人感染，渲染成 rgb(226, 235, 244) 色
+      // 若该地区感染人数小于 50，渲染成 rgb(255, 231, 184) 色
+      // 若该地区感染人数 200 人，渲染成 rgb(255, 208, 166) 色
+      // 若该地区感染人数 1000 人，渲染成 rgb(255, 170, 128) 色
+      // 若该地区感染人数 大于等于1000人，渲染成 rgb(255, 112, 79) 色
+
+      function mapColor(nowConfirm) {
+        if (!nowConfirm) {
+          return 'rgb(226, 235, 244)'
+        }
+        if (nowConfirm < 50) {
+          return 'rgb(255, 231, 184)'
+        }
+        if (nowConfirm < 200) {
+          return 'rgb(255, 208, 166)'
+        }
+        if (nowConfirm < 1000) {
+          return 'rgb(255, 170, 128)'
+        }
+        return 'rgb(255, 112, 79)'
+      }
+
+      function drawPoints(ctx, points) {
+        ctx.beginPath()
+        ctx.moveTo(...points[0])
+        for (let i = 1; i < points.length; i++) {
+          ctx.lineTo(...points[i])
+        }
+        ctx.stroke()
+        ctx.fill()
+      }
+
+      ;(async function () {
+        // 中国地图的地理数据
+        const chinaData = await (
+          await fetch('./asset/china-geojson.json')
+        ).json()
+
+        // 疫情数据
+        const { data: covidData } = await (
+          await fetch(
+            'https://api.inews.qq.com/newsqa/v1/query/inner/publish/modules/list?modules=localCityNCOVDataList,diseaseh5Shelf'
+          )
+        ).json()
+
+        mapDataToCountries(chinaData, covidData)
+
+        const features = chinaData.features
+        features.forEach(({ geometry, properties }) => {
+          const { name, centroid, center, convid } = properties
+          // if (!convid || !convid.total) {
+          //   return
+          // }
+
+          // 确诊人数
+          const nowConfirm = convid.total ? convid.total.nowConfirm : undefined
+          // 设置填充颜色
+          ctx.fillStyle =
+            nowConfirm != undefined ? mapColor(nowConfirm) : 'transparent'
+
+          if (geometry.type === 'MultiPolygon') {
+            const coordinates = geometry.coordinates
+            if (coordinates) {
+              coordinates.forEach((contours) => {
+                contours.forEach((path) => {
+                  const points = path.map(projection)
+                  drawPoints(ctx, points)
+                })
+              })
+            }
+          } else if (geometry.type == 'Polygon') {
+            const contours = geometry.coordinates
+            contours.forEach((path) => {
+              const points = path.map(projection)
+              drawPoints(ctx, points)
+            })
+          }
+        })
+
+        // 显示信息
+        features.forEach(({ properties }) => {
+          const { name, centroid, center, convid } = properties
+          if (!convid || !convid.total) {
+            return
+          }
+          // 确诊人数
+          const nowConfirm = convid.total.nowConfirm
+
+          const [x, y] = projection(centroid || center)
+          // 省份名字
+          // ctx.fillText(name, ...projection(centroid))
+          ctx.fillStyle = 'black'
+          ctx.font = '12px Arial'
+          ctx.textAlign = 'center'
+          ctx.fillText(`${name}: ${nowConfirm.toLocaleString()}人`, x, y)
+        })
+      })()
+    </script>
+  </body>
+</html>
