@@ -9,5 +9,5 @@ pnpm install
 ## 启动
 
 ```bash
-pnpm 
+pnpm dev
 ```
