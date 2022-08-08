@@ -35,3 +35,9 @@ h1 {
   padding: 2rem;
   text-align: center;
 }
+
+.home {
+  display: flex;
+  flex-direction: column;
+  justify-items: center;
+}

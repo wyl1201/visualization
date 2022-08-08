@@ -12,6 +12,7 @@
     "commit": "cz"
   },
   "devDependencies": {
+    "@vitejs/plugin-react": "^2.0.0",
     "commitizen": "^4.2.5",
     "cz-conventional-changelog": "^3.3.0",
     "eslint": "^7.32.0 || ^8.2.0",
@@ -26,6 +27,9 @@
   },
   "dependencies": {
     "@turf/turf": "^6.5.0",
+    "@wayz/react-gl": "^0.9.14",
+    "react": "17.0.2",
+    "react-dom": "17.0.2",
     "topojson-client": "^3.1.0"
   }
 }

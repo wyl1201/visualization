@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <link rel="icon" type="image/svg+xml" href="/vite.svg" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>声明式图形系统-SVG</title>
+    <style>
+      .map-legend {
+        position: absolute;
+        left: 50px;
+        bottom: 200px;
+        width: 16px;
+      }
+      .item {
+        height: 32px;
+        position: relative;
+      }
+
+      item:first-child {
+        border-radius: 1px 1px 0 0;
+      }
+      .item > p {
+        position: absolute;
+        line-height: 32px;
+        height: 32px;
+        white-space: nowrap;
+        font-size: 16px;
+        left: 20px;
+        top: 50%;
+        transform: translateY(-50%);
+        color: #737373;
+        font-weight: 400;
+      }
+    </style>
+  </head>
+  <body>
+    <div id="app">
+      <!-- Map Legend -->
+      <div class="map-legend">
+        <div class="item" style="background-color: rgb(255, 112, 79)">
+          <p>1000人以上</p>
+        </div>
+        <div class="item" style="background-color: rgb(255, 170, 128)">
+          <p>200-999人</p>
+        </div>
+        <div class="item" style="background-color: rgb(255, 208, 166)">
+          <p>50-199人</p>
+        </div>
+        <div class="item" style="background-color: rgb(255, 231, 184)">
+          <p>1-49人</p>
+        </div>
+        <div class="item" style="background-color: rgb(226, 235, 244)">
+          <p>0人</p>
+        </div>
+      </div>
+    </div>
+    <script type="module" src="./china-webgl.jsx"></script>
+  </body>
+</html>
