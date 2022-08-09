@@ -57,8 +57,21 @@
       </div>
     </div>
     <script type="module">
+      import { mapDataToCountries, mapColor } from '~/utils'
       import '/style.css'
       import './main.css'
+
+      // 中国经度范围：73°33′E至135°05′E；纬度范围：3°51′N至53°33′N。
+      // 当中的字母专E ， 表示东经；属字母N，表示北纬。东经正数，西经为负数；
+      // 北纬为正数，南纬为负数。
+      // [73.502355, 3.39716187, 135.09567, 53.563269]
+
+      export function projection([longitude, latitude]) {
+        const x = (width * (longitude - 73.33)) / (135.09567 - 73.502355)
+        const y =
+          height * (1 - (latitude - 3.39716187) / (53.563269 - 3.39716187))
+        return [x, y]
+      }
 
       // dpi
       const devicePixelRatio = window.devicePixelRatio || 1
@@ -74,65 +87,6 @@
 
       ctx.scale(devicePixelRatio, devicePixelRatio)
       ctx.fillStyle = 'black'
-
-      // 中国经度范围：73°33′E至135°05′E；纬度范围：3°51′N至53°33′N。
-      // 当中的字母专E ， 表示东经；属字母N，表示北纬。东经正数，西经为负数；
-      // 北纬为正数，南纬为负数。
-      // [73.502355, 3.39716187, 135.09567, 53.563269]
-
-      function projection([longitude, latitude]) {
-        const x = (width * (longitude - 73.33)) / (135.09567 - 73.502355)
-        const y =
-          height * (1 - (latitude - 3.39716187) / (53.563269 - 3.39716187))
-        return [x, y]
-      }
-
-      // 整合地理数据和疫情数据
-      function mapDataToCountries(geoData, convidData) {
-        const convidDataMap = {}
-        const provinces = convidData.diseaseh5Shelf.areaTree[0].children
-        provinces.forEach((d) => {
-          const name = d.name
-          const adcode =
-            name === '香港'
-              ? 810000
-              : name === '澳门'
-              ? 820000
-              : name === '台湾'
-              ? 710000
-              : d.adcode
-          convidDataMap[adcode] = d
-        })
-
-        geoData.features.forEach((d) => {
-          const adcode = d.properties.adcode
-          d.properties.convid = convidDataMap[adcode] || {}
-        })
-      }
-
-      // 我把无人感染到感染人数超过 1000 人划分了 5 个等级，
-      // 每个等级用不同的颜色表示：
-      // 若该地区无人感染，渲染成 rgb(226, 235, 244) 色
-      // 若该地区感染人数小于 50，渲染成 rgb(255, 231, 184) 色
-      // 若该地区感染人数 200 人，渲染成 rgb(255, 208, 166) 色
-      // 若该地区感染人数 1000 人，渲染成 rgb(255, 170, 128) 色
-      // 若该地区感染人数 大于等于1000人，渲染成 rgb(255, 112, 79) 色
-
-      function mapColor(nowConfirm) {
-        if (!nowConfirm) {
-          return 'rgb(226, 235, 244)'
-        }
-        if (nowConfirm < 50) {
-          return 'rgb(255, 231, 184)'
-        }
-        if (nowConfirm < 200) {
-          return 'rgb(255, 208, 166)'
-        }
-        if (nowConfirm < 1000) {
-          return 'rgb(255, 170, 128)'
-        }
-        return 'rgb(255, 112, 79)'
-      }
 
       function drawPoints(ctx, points) {
         ctx.beginPath()

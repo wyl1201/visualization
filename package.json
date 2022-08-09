@@ -4,6 +4,7 @@
   "version": "0.0.0",
   "type": "module",
   "scripts": {
+    "preinstall": "npx only-allow pnpm",
     "dev": "nodemon -w vite.config.js --exec vite",
     "build": "vite build",
     "preview": "vite preview",
@@ -28,6 +29,7 @@
   "dependencies": {
     "@turf/turf": "^6.5.0",
     "@wayz/react-gl": "^0.9.14",
+    "d3-color": "^3.1.0",
     "react": "17.0.2",
     "react-dom": "17.0.2",
     "topojson-client": "^3.1.0"
